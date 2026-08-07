@@ -1,78 +1,34 @@
-package com.socle.backend.model;
+package com.socle.backend.service;
 
-import jakarta.persistence.*;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-@Entity
-@Table(name = "documents")
-public class DocumentEntity {
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Service
+public class CloudinaryService {
 
-    @Column(nullable = false)
-    private String titre;
+    private final Cloudinary cloudinary;
 
-    @Column(length = 2000)
-    private String resume;
+    public CloudinaryService() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("cloud_name", System.getenv("CLOUDINARY_CLOUD_NAME"));
+        config.put("api_key", System.getenv("CLOUDINARY_API_KEY"));
+        config.put("api_secret", System.getenv("CLOUDINARY_API_SECRET"));
+        config.put("secure", true);
+        this.cloudinary = new Cloudinary(config);
+    }
 
-    @Column(nullable = false)
-    private String type;
-
-    @Column(nullable = false)
-    private String filiere;
-
-    @Column(nullable = false)
-    private String auteur;
-
-    private String matricule;
-
-    private Integer annee;
-
-    @Column(nullable = false)
-    private Instant datePublication = Instant.now();
-
-    private Integer plagiatScore = 90;
-    private Integer consultations = 0;
-    private Integer downloads = 0;
-    private boolean featured = false;
-    private boolean adminPublished = false;
-
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<SectionEntity> sections = new ArrayList<>();
-
-    public DocumentEntity() {}
-
-    public Long getId() { return id; }
-    public String getTitre() { return titre; }
-    public void setTitre(String titre) { this.titre = titre; }
-    public String getResume() { return resume; }
-    public void setResume(String resume) { this.resume = resume; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public String getFiliere() { return filiere; }
-    public void setFiliere(String filiere) { this.filiere = filiere; }
-    public String getAuteur() { return auteur; }
-    public void setAuteur(String auteur) { this.auteur = auteur; }
-    public String getMatricule() { return matricule; }
-    public void setMatricule(String matricule) { this.matricule = matricule; }
-    public Integer getAnnee() { return annee; }
-    public void setAnnee(Integer annee) { this.annee = annee; }
-    public Instant getDatePublication() { return datePublication; }
-    public void setDatePublication(Instant d) { this.datePublication = d; }
-    public Integer getPlagiatScore() { return plagiatScore; }
-    public void setPlagiatScore(Integer p) { this.plagiatScore = p; }
-    public Integer getConsultations() { return consultations; }
-    public void setConsultations(Integer c) { this.consultations = c; }
-    public Integer getDownloads() { return downloads; }
-    public void setDownloads(Integer d) { this.downloads = d; }
-    public boolean isFeatured() { return featured; }
-    public void setFeatured(boolean f) { this.featured = f; }
-    public boolean isAdminPublished() { return adminPublished; }
-    public void setAdminPublished(boolean a) { this.adminPublished = a; }
-    public List<SectionEntity> getSections() { return sections; }
-    public void setSections(List<SectionEntity> s) { this.sections = s; }
+    @SuppressWarnings("unchecked")
+    public String uploadPdf(MultipartFile file) throws IOException {
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "resource_type", "raw",
+                "folder", "socle/documents"
+        ));
+        return (String) uploadResult.get("secure_url");
+    }
 }
