@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class CloudinaryService {
@@ -25,9 +26,14 @@ public class CloudinaryService {
 
     @SuppressWarnings("unchecked")
     public String uploadPdf(MultipartFile file) throws IOException {
+        String publicId = "doc_" + UUID.randomUUID().toString().replace("-", "") + ".pdf";
+
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                 "resource_type", "raw",
-                "folder", "socle/documents"
+                "folder", "socle/documents",
+                "public_id", publicId,
+                "use_filename", false,
+                "unique_filename", false
         ));
         return (String) uploadResult.get("secure_url");
     }
