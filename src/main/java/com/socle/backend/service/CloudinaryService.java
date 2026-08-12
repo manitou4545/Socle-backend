@@ -26,10 +26,12 @@ public class CloudinaryService {
 
     @SuppressWarnings("unchecked")
     public String uploadPdf(MultipartFile file) throws IOException {
+        // "image" (et non "raw") permet a Cloudinary de livrer le PDF sans forcer
+        // le telechargement, ce qui rend l'affichage dans un <iframe> possible.
         String publicId = "doc_" + UUID.randomUUID().toString().replace("-", "") + ".pdf";
 
         Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                "resource_type", "raw",
+                "resource_type", "image",
                 "folder", "socle/documents",
                 "public_id", publicId,
                 "use_filename", false,
