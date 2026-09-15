@@ -1,0 +1,40 @@
+services:
+  # --- API principale Java Spring Boot ---
+  - type: web
+    name: socle-backend-java
+    runtime: docker
+    dockerfilePath: ./backend-java/Dockerfile
+    dockerContext: ./backend-java
+    plan: free
+    envVars:
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SOCLE_CORS_ALLOWED_ORIGIN
+        value: "*"
+        # Remplace par l'URL réelle du frontend une fois déployé
+        # (ex: https://socle.netlify.app) pour restreindre le CORS.
+      - key: PLAGIAT_SERVICE_URL
+        value: "https://socle-backend-python.onrender.com"
+        # Mets à jour avec l'URL réelle donnée par Render pour le
+        # service ci-dessous une fois les deux déployés.
+      - key: GROQ_API_KEY
+        sync: false
+        # Clé gratuite à générer sur console.groq.com pour l'Assistant Minier.
+
+  # --- Microservice Python anti-plagiat ---
+  - type: web
+    name: socle-backend-python
+    runtime: docker
+    dockerfilePath: ./backend-python/Dockerfile
+    dockerContext: ./backend-python
+    plan: free
+    envVars:
+      - key: JAVA_BACKEND_URL
+        value: "https://socle-backend-java.onrender.com"
+        # Mets à jour avec l'URL réelle donnée par Render pour le
+        # service Java une fois déployé, pour que ce microservice
+        # puisse récupérer automatiquement le corpus des documents.
