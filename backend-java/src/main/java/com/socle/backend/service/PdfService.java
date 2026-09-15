@@ -54,7 +54,7 @@ public class PdfService {
                 int pageNumber = i + 1; // 1-indexé pour correspondre à ce que voit l'étudiant
                 PageLockEntity matchingLock = findLockForPage(locks, pageNumber);
                 if (matchingLock != null) {
-                    output.addPage(buildLockedPlaceholderPage(pageNumber, matchingLock.getPrix(), matchingLock.getTitre()));
+                    addLockedPlaceholderPage(output, pageNumber, matchingLock.getPrix(), matchingLock.getTitre());
                 } else {
                     PDPage imported = output.importPage(source.getPage(i));
                     imported.setResources(source.getPage(i).getResources());
@@ -98,44 +98,39 @@ public class PdfService {
         return null;
     }
 
-    private PDPage buildLockedPlaceholderPage(int pageNumber, int prix, String titre) throws IOException {
-        try (PDDocument tempDoc = new PDDocument()) {
-            PDPage page = new PDPage(PDRectangle.A4);
-            tempDoc.addPage(page);
-            try (PDPageContentStream cs = new PDPageContentStream(tempDoc, page)) {
-                PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-                PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-                float pageWidth = PDRectangle.A4.getWidth();
-                float centerY = PDRectangle.A4.getHeight() / 2;
+    private void addLockedPlaceholderPage(PDDocument output, int pageNumber, int prix, String titre) throws IOException {
+        PDPage page = new PDPage(PDRectangle.A4);
+        output.addPage(page); // la page est créée directement DANS le document final : pas de clonage nécessaire
+        try (PDPageContentStream cs = new PDPageContentStream(output, page)) {
+            PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+            PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+            float pageWidth = PDRectangle.A4.getWidth();
+            float centerY = PDRectangle.A4.getHeight() / 2;
 
+            cs.beginText();
+            cs.setFont(font, 18);
+            String title = "CONTENU VERROUILLE";
+            float titleWidth = font.getStringWidth(title) / 1000 * 18;
+            cs.newLineAtOffset((pageWidth - titleWidth) / 2, centerY + 35);
+            cs.showText(title);
+            cs.endText();
+
+            if (titre != null && !titre.isBlank()) {
                 cs.beginText();
-                cs.setFont(font, 18);
-                String title = "CONTENU VERROUILLE";
-                float titleWidth = font.getStringWidth(title) / 1000 * 18;
-                cs.newLineAtOffset((pageWidth - titleWidth) / 2, centerY + 35);
-                cs.showText(title);
-                cs.endText();
-
-                if (titre != null && !titre.isBlank()) {
-                    cs.beginText();
-                    cs.setFont(font, 13);
-                    float sectionTitleWidth = font.getStringWidth(titre) / 1000 * 13;
-                    cs.newLineAtOffset((pageWidth - sectionTitleWidth) / 2, centerY + 10);
-                    cs.showText(titre);
-                    cs.endText();
-                }
-
-                cs.beginText();
-                cs.setFont(fontRegular, 12);
-                String subtitle = "Page " + pageNumber + " reservee a l'auteur - " + prix + " credits pour deverrouiller";
-                float subtitleWidth = fontRegular.getStringWidth(subtitle) / 1000 * 12;
-                cs.newLineAtOffset((pageWidth - subtitleWidth) / 2, centerY - 15);
-                cs.showText(subtitle);
+                cs.setFont(font, 13);
+                float sectionTitleWidth = font.getStringWidth(titre) / 1000 * 13;
+                cs.newLineAtOffset((pageWidth - sectionTitleWidth) / 2, centerY + 10);
+                cs.showText(titre);
                 cs.endText();
             }
-            // La page appartient à tempDoc, qui va se fermer : on clone son dictionnaire
-            // COS pour obtenir une PDPage indépendante, réutilisable dans le document appelant.
-            return new PDPage((org.apache.pdfbox.cos.COSDictionary) page.getCOSObject().copy());
+
+            cs.beginText();
+            cs.setFont(fontRegular, 12);
+            String subtitle = "Page " + pageNumber + " reservee a l'auteur - " + prix + " credits pour deverrouiller";
+            float subtitleWidth = fontRegular.getStringWidth(subtitle) / 1000 * 12;
+            cs.newLineAtOffset((pageWidth - subtitleWidth) / 2, centerY - 15);
+            cs.showText(subtitle);
+            cs.endText();
         }
     }
 }
