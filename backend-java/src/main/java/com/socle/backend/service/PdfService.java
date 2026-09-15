@@ -6,7 +6,6 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 
@@ -102,8 +101,8 @@ public class PdfService {
         PDPage page = new PDPage(PDRectangle.A4);
         output.addPage(page); // la page est créée directement DANS le document final : pas de clonage nécessaire
         try (PDPageContentStream cs = new PDPageContentStream(output, page)) {
-            PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-            PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+            PDType1Font font = PDType1Font.HELVETICA_BOLD;
+            PDType1Font fontRegular = PDType1Font.HELVETICA;
             float pageWidth = PDRectangle.A4.getWidth();
             float centerY = PDRectangle.A4.getHeight() / 2;
 
